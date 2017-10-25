@@ -1,0 +1,77 @@
+# Finding the Words in a Message {#finding-words}
+
+We need to access the body of the message in order to extract its words. Also, we need to eliminate the attachments from the body as we are not interested in this portion of the body. (We leave it as an exercise to extract the words from any text attachments and include them in the set of a message's words.) Once we have located the relevant portion of the message body, our task is to extract its words. We tackle each of these 3 steps in turn and place the code in functions, `split_message()`, `drop_attach()`, `find_msg_words()`, respectively.
+
+## Splitting the Message into Its Header and Body
+
+Recall from Chapter \@ref(anatomy) that the header and body of the message are separated by an empty line. This should be the first empty line in the email. We can find this line by finding all the empty lines and then choosing the first of these. We work with the first message in `sample_email` and find the index of the first empty line with
+
+```{r}
+msg <- sample_email[[1]]
+which(msg == '')[1]
+```
+
+An alternative way to do this is to use `stringr::str_which()`. It takes a regular expression and returns the positions of any matches.
+
+```{r}
+str_which(msg, '^$')[1]
+```
+
+Let's assign this location to `split_point`.
+
+```{r}
+split_point <- str_which(msg, '^$')[1]
+```
+
+To confirm that we have correctly found the division between the header and body, we examine a few lines in `msg` on either side of `split_point` with
+
+```{r}
+msg[(split_point - 2):(split_point + 6)]
+```
+
+This may be a bit confusing because we have an indented header from another message within the body of this message, but it appears we have correctly located the empty line that marks the beginning of the body.
+
+Simple subsetting gives us the header and the body. The header is the first, second, third, etc. lines up to but not including `split_point`, and the body includes all lines past `split_point`. That is,
+
+```{r}
+header <- head(msg, split_point - 1)
+body <- tail(msg, -split_point)
+```
+
+We close this esction by collecting the code we have written into the `split_message()` function. The input to this function is the character vector returned from `read_lines()` (see Chapter \@ref(reading)), and the output is a list of 2 character vectors comprising the header and body. Our simple function is
+
+```{r}
+split_message <- function(msg) {
+  split_point <- str_which(msg, '^$')[1]
+  header <- head(msg, split_point - 1)
+  body <- tail(msg, -split_point)
+  list(header = header, body = body)
+}
+```
+
+We apply this function to our sample messages with
+
+```{r}
+sample_split <- map(sample_email, split_message)
+```
+
+We have found the body of the message, and we next tackle the removal of any attachments.
+
+## Removing Attachments from the Message Body
+
+We saw in Chapter \@ref(anatomy) that when an email message has attachments, the MIME type is `multipart` and the `Content-Type` field provides a boundary string that can be used to locate the attachments. In the example provided there, the `Content-Type` field is
+
+```
+Content-Type: MULTIPART/Mixed;
+  BOUNDARY="_===669732----calmail-me.berkeley.edu===_"
+```
+
+It seems our first step is to find the `Content-Type` key and use its value to determine whether or not an attachment is present. If so, then we find the boundary string and use this string to locate the attachments.
+
+We work with the first message in our sample and use the `stringr::str_which()` function to locate `Content-Type` in the header with 
+
+```{r}
+header <- sample_split[[1]]$header
+str_which(header, 'Content-Type')[1]
+```
+

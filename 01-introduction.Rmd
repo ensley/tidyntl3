@@ -1,0 +1,29 @@
+# Introduction {#introduction}
+
+People are terrific at spotting spam in their mail reader with a quick glance at the subject line and sender, and when that approach is not conclusive, a glimpse at the contents of the message is usually enough to classify the message. But how do we design an automated procedure to classify and eliminate these unwanted messages to save us the time and irritation of having to sort through them in our inbox? Spam filters used by mail readers examine various characteristics of an email before deciding whether to place it in your inbox or spam folder. This decision is in part based on a statistical analysis of a large amount of email that has been hand classified as spam (unwanted) or ham (wanted). In this chapter, we examine over 9000 messages that have been classified by SpamAssassin ^[http://spamassassin.apache.org/] for the purpose of developing and testing spam filters.
+
+Before we can begin to analyze the information present in the SpamAssassin corpus, we need to process the messages into a form conducive to statistical analysis. The content of the message itself might be useful for analysis, but how do we organize and quantify this information? We can take a text mining approach where we tally up all the words occurring in a message and compare the frequencies of these words in ham and spam. Alternatively, or additionally, we can derive variables from characteristics of the message and use these to classify email. For example, the amount of capitalization in the subject line may be useful in ascertaining whether or not the message is spam.
+
+Clearly we need to do a lot of text processing to get these thousands of messages into shape for either type of analysis. A first task is to bring the email into R for processing. To do this we need to read thousands of files as each message is in its own file. This is the topic of Chapter \@ref(reading). Then for each message, we locate its various parts:
+
+a) the header, which contains information about, e.g., the sender and subject;
+b) the message itself; and
+c) any attachments.
+
+However, before we can design the data extraction, we need to know more about the organization and format of a general email message. We describe the structure of email messages in Chapter \@ref(anatomy).
+
+We also need to know more about the analysis we want to perform. For text mining, we use the naive Bayes method to approximate the likelihood a message is spam given the message content. This approach requires processing the message content to locate the words within the message, clean them up, e.g., handle punctuation and capitalization, and tally them. We describe the naive Bayes technique in Chapter \@ref(mining), then we prepare the email for analysis in Chapter \@ref(finding-words), and carry out the analysis in Chapter \@ref(naive-bayes). Alternatively, we employ a decision tree that uses derived variables, which represent characteristics of a message, to classify the messages. In order to derive these variables, we need to process the header and body of the email message to extract information. For example, we can count the number of characters in the message or look for excess capitalization and punctuation in the subject line. We follow the same sequence of tasks for this approach as we do with text mining. That is, in Chapter \@ref(classification-trees), we describe decision trees; then we process the email in Chapter \@ref(organizing) and derive the variables and explore them in Chapter \@ref(deriving-variables) and Chapter \@ref(feature-set), respectively; and lastly, we apply a recursive partitioning method in Chapter \@ref(fitting) to build a decision tree from the derived set of features. The presentations of these two approaches do not depend on one another so the reader may choose to focus on one approach only.
+
+## Computational Topics
+
+The computational work in this chapter involves extensive text processing, which includes the following types of computations.
+
+* Locate and process thousands of files by programmatically finding the names of the files and reading them into R in a general and automated manner.
+* Manipulate strings and apply regular expressions to strings to turn the unstructured text in a message into structured information for analysis.
+* Use cross-validation to select among competing models, e.g. by varying parameters in fitting a model, and evaluate the selected model using independent test data. This includes finding the Type I and II errors incurred when applying different model fits to test data.
+* Efficiently and accurately compute with vectors containing large numbers of small values.
+* Explore the email to design variables and develop intuition for what may be useful features in predicting spam and ham.
+* Classification trees and recursive partitioning.
+* Debugging techniques.
+* Complex data structures, e.g. lists of lists of vectors and data frames.
+* Writing modular functions to process the email files.

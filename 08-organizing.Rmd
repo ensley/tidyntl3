@@ -1,0 +1,1 @@
+# Organizing an Email Message into an R Data Structure {#organizing}

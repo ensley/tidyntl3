@@ -1,0 +1,94 @@
+# Reading the Email Messages {#reading}
+
+In order to read the raw text messages into R, we need to know where they are located and how they are organized in the file system on our computer. as mentioned already, these messages are made available by SpamAssassin^[http://spamassassin.apache.org]. After we know how the information is organized, we can develop a function to read the email into R.
+
+We can use a file finder to check the organization of the messages or use simple command-line shell tools to examine the contents of the data folder. Alternatively, we can use R to perform these operations. This is the approach that we take.
+
+```{r}
+list.files('data', full.names = FALSE)
+```
+
+The names of these directories suggest that the ham messages have been organized into those that are easy or difficult to detect. The file names are a bit more inscrutable. We examine a few file names in `easy_ham/` with
+
+```{r}
+file.path('data', 'easy_ham') %>% list.files() %>% head()
+```
+
+We check that the names of the messages in the spam directories look the same as those in the ham directories with
+
+```{r}
+file.path('data', 'spam_2') %>% list.files() %>% head()
+```
+
+The SpamAssassin web page at http://spamassassin.org/publiccorpus/ gives a description of the naming convention for these files. According to the website, the messages are named by a message number and their MD5 checksum. The MD5 checksum is a unique identifier derived from the contents of the file.
+
+How many files are there all together? We use `length()` and `list.files()` to find out with
+
+```{r}
+dir_names <- list.files('data')
+file.path('data', dir_names) %>% list.files() %>% length()
+```
+
+There are over 9000 messages in the 5 directories combined. These are not equally divided between the 5 directories:
+
+```{r}
+file.path('data', dir_names) %>% 
+  map(~ length(list.files(.))) %>% 
+  set_names(dir_names)
+```
+
+There are only 501 messages in `hard_ham` and about one quarter of the email is spam.
+
+Given the organization and volume of files, we cannot simply read the files into R by writing calls such as
+
+```{r eval=FALSE}
+read_lines('data/easy_ham/00006.3ca1f399...')
+```
+
+How do we read the contents of the files into R in a more genreal, automated, machine-independent manner? And, is `read_lines()` the function we should use?
+
+Let's address the second question first. Since our email is free-formatted text, it is probably easiest to import the contents of each file as a sequence of lines. In other words, when we read a message, we want to obtain a character vector with one string per line in the file. The `readr::read_lines()` function offers this capability so we use it.
+
+Now to automate the process, we want to avoid typing the file name ourselves. If a file's name has been assigned to a string, say, in the variable `file_name`, then we can pass the file name to `read_lines()` with
+
+```{r eval=FALSE}
+read_lines(file_name)
+```
+
+In our case this string might be
+
+```
+data/easy_ham/00006.3ca1f399ccda5d897fecb8c57669a283
+```
+
+In order to find the file names in a machine-independent manner, we again use the `list.files()` function. Recall that `dir_names` contains the names of the 5 subdirectories in `data/` that contain the message files. We construct the full name for these directories by pasting together these strings with
+
+```{r}
+full_dir_names <- file.path('data', dir_names)
+```
+
+We obtain the full names of the files within the first directory with
+
+```{r}
+file_names <- list.files(full_dir_names[1], full.names = TRUE)
+file_names[1]
+```
+
+Then, we can read the first message in `easy_ham` with
+
+```{r}
+msg <- read_lines(file_names[1])
+head(msg)
+```
+
+We have successfully located the email files and determined how to programmatically read them into R as character vectors, but before we attempt to wrap this code into a function and read all the email into R, let's consider how to prepare each message for analysi. To do this, we want to think about what we want to end up with. What parts of the message do we want to keep? How do we want to analyze the email? If we just start writing code, there is a danger that we will get confused and the code will become intertwined with doing several different things. The answers to these questions depend on the kind of analysis we want to perform. In the next section, we provide a brief summary of the naive Bayes approach to classifying email that uses only the content of the message. After we understand how to carry out this statistical analysis, we will be able to answer these questions about how to process and store the email.
+
+Lastly to assist us, we select a small set of email messages to use as test cases as we develop our code. We have chosen, by manual inspection, 15 ham message files from the first directory that exhibit different characteristics of email. We read them into R as follows:
+
+```{r}
+idx <- c(1:5, 15, 27, 68, 69, 329, 404, 427, 516, 852, 971)
+fn <- list.files(full_dir_names[1], full.names = TRUE)[idx]
+sample_email <- map(fn, read_lines)
+```
+
+Of course, we have no spam or hard ham in our sample. We may want to revisit this selection later to ensure that we have emails that are representative of the different cases our code needs to be able to handle.

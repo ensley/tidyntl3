@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="Using Statistics to Identify Spam" />
+<meta property="og:type" content="book" />
+
+
+
+
+
+<meta name="author" content="John Ensley" />
+
+<meta name="date" content="2017-10-24" />
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+
+<meta name="description" content="Using Statistics to Identify Spam">
+
+<title>Using Statistics to Identify Spam</title>
+
+<link href="libs/tufte-css/tufte.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+<link rel="stylesheet" href="toc.css" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div class="row">
+<div class="col-sm-12">
+<div id="TOC">
+<ul>
+<li><a href="index.html#preface">Preface</a></li>
+<li><a href="introduction.html#introduction"><span class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="anatomy.html#anatomy"><span class="toc-section-number">2</span> Anatomy of an Email Message</a></li>
+<li><a href="reading.html#reading"><span class="toc-section-number">3</span> Reading the Email Messages</a></li>
+<li><a href="mining.html#mining"><span class="toc-section-number">4</span> Text Mining and Naive Bayes Classification</a></li>
+<li><a href="finding-words.html#finding-words"><span class="toc-section-number">5</span> Finding the Words in a Message</a></li>
+<li><a href="naive-bayes.html#naive-bayes"><span class="toc-section-number">6</span> Implementing the Naive Bayes Classifier</a></li>
+<li><a href="classification-trees.html#classification-trees"><span class="toc-section-number">7</span> Recursive Partitioning and Classification Trees</a></li>
+<li><a href="organizing.html#organizing"><span class="toc-section-number">8</span> Organizing an Email Message into an R Data Structure</a></li>
+<li><a href="deriving-variables.html#deriving-variables"><span class="toc-section-number">9</span> Deriving Variables from the Email Message</a></li>
+<li><a href="feature-set.html#feature-set"><span class="toc-section-number">10</span> Exploring the Email Feature Set</a></li>
+<li><a href="fitting.html#fitting"><span class="toc-section-number">11</span> Fitting the <code>rpart()</code> Model to the Email Data</a></li>
+<li><a href="exercises.html#exercises"><span class="toc-section-number">12</span> Exercises</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+<div id="reading" class="section level1">
+<h1><span class="header-section-number">Chapter 3</span> Reading the Email Messages</h1>
+<p>In order to read the raw text messages into R, we need to know where they are located and how they are organized in the file system on our computer. as mentioned already, these messages are made available by SpamAssassin<label for="tufte-sn-2" class="margin-toggle sidenote-number">2</label><input type="checkbox" id="tufte-sn-2" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">2</span> <a href="http://spamassassin.apache.org" class="uri">http://spamassassin.apache.org</a></span>. After we know how the information is organized, we can develop a function to read the email into R.</p>
+<p>We can use a file finder to check the organization of the messages or use simple command-line shell tools to examine the contents of the data folder. Alternatively, we can use R to perform these operations. This is the approach that we take.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">list.files</span>(<span class="st">&#39;data&#39;</span>, <span class="dt">full.names =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## [1] &quot;easy_ham&quot;   &quot;easy_ham_2&quot; &quot;hard_ham&quot;   &quot;spam&quot;       &quot;spam_2&quot;</code></pre>
+<p>The names of these directories suggest that the ham messages have been organized into those that are easy or difficult to detect. The file names are a bit more inscrutable. We examine a few file names in <code>easy_ham/</code> with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(<span class="st">&#39;data&#39;</span>, <span class="st">&#39;easy_ham&#39;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">list.files</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>()</code></pre></div>
+<pre><code>## [1] &quot;00001.7c53336b37003a9286aba55d2945844c&quot;
+## [2] &quot;00002.9c4069e25e1ef370c078db7ee85ff9ac&quot;
+## [3] &quot;00003.860e3c3cee1b42ead714c5c874fe25f7&quot;
+## [4] &quot;00004.864220c5b6930b209cc287c361c99af1&quot;
+## [5] &quot;00005.bf27cdeaf0b8c4647ecd61b1d09da613&quot;
+## [6] &quot;00006.253ea2f9a9cc36fa0b1129b04b806608&quot;</code></pre>
+<p>We check that the names of the messages in the spam directories look the same as those in the ham directories with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(<span class="st">&#39;data&#39;</span>, <span class="st">&#39;spam_2&#39;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">list.files</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>()</code></pre></div>
+<pre><code>## [1] &quot;00001.317e78fa8ee2f54cd4890fdc09ba8176&quot;
+## [2] &quot;00002.9438920e9a55591b18e60d1ed37d992b&quot;
+## [3] &quot;00003.590eff932f8704d8b0fcbe69d023b54d&quot;
+## [4] &quot;00004.bdcc075fa4beb5157b5dd6cd41d8887b&quot;
+## [5] &quot;00005.ed0aba4d386c5e62bc737cf3f0ed9589&quot;
+## [6] &quot;00006.3ca1f399ccda5d897fecb8c57669a283&quot;</code></pre>
+<p>The SpamAssassin web page at <a href="http://spamassassin.org/publiccorpus/" class="uri">http://spamassassin.org/publiccorpus/</a> gives a description of the naming convention for these files. According to the website, the messages are named by a message number and their MD5 checksum. The MD5 checksum is a unique identifier derived from the contents of the file.</p>
+<p>How many files are there all together? We use <code>length()</code> and <code>list.files()</code> to find out with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dir_names &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="st">&#39;data&#39;</span>)
+<span class="kw">file.path</span>(<span class="st">&#39;data&#39;</span>, dir_names) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">list.files</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">length</span>()</code></pre></div>
+<pre><code>## [1] 9353</code></pre>
+<p>There are over 9000 messages in the 5 directories combined. These are not equally divided between the 5 directories:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(<span class="st">&#39;data&#39;</span>, dir_names) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="st"> </span><span class="kw">length</span>(<span class="kw">list.files</span>(.))) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">set_names</span>(dir_names)</code></pre></div>
+<pre><code>## $easy_ham
+## [1] 5052
+## 
+## $easy_ham_2
+## [1] 1401
+## 
+## $hard_ham
+## [1] 501
+## 
+## $spam
+## [1] 1001
+## 
+## $spam_2
+## [1] 1398</code></pre>
+<p>There are only 501 messages in <code>hard_ham</code> and about one quarter of the email is spam.</p>
+<p>Given the organization and volume of files, we cannot simply read the files into R by writing calls such as</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">read_lines</span>(<span class="st">&#39;data/easy_ham/00006.3ca1f399...&#39;</span>)</code></pre></div>
+<p>How do we read the contents of the files into R in a more genreal, automated, machine-independent manner? And, is <code>read_lines()</code> the function we should use?</p>
+<p>Let’s address the second question first. Since our email is free-formatted text, it is probably easiest to import the contents of each file as a sequence of lines. In other words, when we read a message, we want to obtain a character vector with one string per line in the file. The <code>readr::read_lines()</code> function offers this capability so we use it.</p>
+<p>Now to automate the process, we want to avoid typing the file name ourselves. If a file’s name has been assigned to a string, say, in the variable <code>file_name</code>, then we can pass the file name to <code>read_lines()</code> with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">read_lines</span>(file_name)</code></pre></div>
+<p>In our case this string might be</p>
+<pre><code>data/easy_ham/00006.3ca1f399ccda5d897fecb8c57669a283</code></pre>
+<p>In order to find the file names in a machine-independent manner, we again use the <code>list.files()</code> function. Recall that <code>dir_names</code> contains the names of the 5 subdirectories in <code>data/</code> that contain the message files. We construct the full name for these directories by pasting together these strings with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">full_dir_names &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="st">&#39;data&#39;</span>, dir_names)</code></pre></div>
+<p>We obtain the full names of the files within the first directory with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">file_names &lt;-<span class="st"> </span><span class="kw">list.files</span>(full_dir_names[<span class="dv">1</span>], <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+file_names[<span class="dv">1</span>]</code></pre></div>
+<pre><code>## [1] &quot;data/easy_ham/00001.7c53336b37003a9286aba55d2945844c&quot;</code></pre>
+<p>Then, we can read the first message in <code>easy_ham</code> with</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">msg &lt;-<span class="st"> </span><span class="kw">read_lines</span>(file_names[<span class="dv">1</span>])
+<span class="kw">head</span>(msg)</code></pre></div>
+<pre><code>## [1] &quot;From exmh-workers-admin@redhat.com  Thu Aug 22 12:36:23 2002&quot;      
+## [2] &quot;Return-Path: &lt;exmh-workers-admin@spamassassin.taint.org&gt;&quot;          
+## [3] &quot;Delivered-To: zzzz@localhost.netnoteinc.com&quot;                       
+## [4] &quot;Received: from localhost (localhost [127.0.0.1])&quot;                  
+## [5] &quot;\tby phobos.labs.netnoteinc.com (Postfix) with ESMTP id D03E543C36&quot;
+## [6] &quot;\tfor &lt;zzzz@localhost&gt;; Thu, 22 Aug 2002 07:36:16 -0400 (EDT)&quot;</code></pre>
+<p>We have successfully located the email files and determined how to programmatically read them into R as character vectors, but before we attempt to wrap this code into a function and read all the email into R, let’s consider how to prepare each message for analysi. To do this, we want to think about what we want to end up with. What parts of the message do we want to keep? How do we want to analyze the email? If we just start writing code, there is a danger that we will get confused and the code will become intertwined with doing several different things. The answers to these questions depend on the kind of analysis we want to perform. In the next section, we provide a brief summary of the naive Bayes approach to classifying email that uses only the content of the message. After we understand how to carry out this statistical analysis, we will be able to answer these questions about how to process and store the email.</p>
+<p>Lastly to assist us, we select a small set of email messages to use as test cases as we develop our code. We have chosen, by manual inspection, 15 ham message files from the first directory that exhibit different characteristics of email. We read them into R as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">idx &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">27</span>, <span class="dv">68</span>, <span class="dv">69</span>, <span class="dv">329</span>, <span class="dv">404</span>, <span class="dv">427</span>, <span class="dv">516</span>, <span class="dv">852</span>, <span class="dv">971</span>)
+fn &lt;-<span class="st"> </span><span class="kw">list.files</span>(full_dir_names[<span class="dv">1</span>], <span class="dt">full.names =</span> <span class="ot">TRUE</span>)[idx]
+sample_email &lt;-<span class="st"> </span><span class="kw">map</span>(fn, read_lines)</code></pre></div>
+<p>Of course, we have no spam or hard ham in our sample. We may want to revisit this selection later to ensure that we have emails that are representative of the different cases our code needs to be able to handle.</p>
+
+</div>
+<p style="text-align: center;">
+<a href="anatomy.html"><button class="btn btn-default">Previous</button></a>
+<a href="mining.html"><button class="btn btn-default">Next</button></a>
+</p>
+</div>
+</div>
+
+
+
+</body>
+</html>

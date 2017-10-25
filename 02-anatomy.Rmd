@@ -1,0 +1,107 @@
+# Anatomy of an Email Message {#anatomy}
+
+`r newthought('An electronic mail message')` has two parts, a header and body. Analogous to surface mail, the header acts as an envelope, and the body is the letter that contains the contents for the recipient. In addition to the date, sender, and subject, the header has many other pieces of information, such as the message id, the carbon-copy (cc) recipients, and routing information as the message is relayed. These pieces of information are provided in a `key: value` format. That is, the key is the name of the kind of information being provided, and the value for that key follows the colon. For example, `From: debnolan@gmail.com` has a key of `From` and the value is the address of the sender. Sometimes the value contains more than one piece of information, and when this occurs, the pieces are separated by semicolons, e.g. `Content-Type: TEXT/PLAIN; charset=US-ASCII`.
+
+The body of the message is separated from the header by a single empty line. When an attachment is added to a message, the attachment is included in the body of the message. That is, even with attachments, email messages still consist only of these two basic parts -- header and body. They may not appear that way when you see them in your email reader, but that is because your email application displays the message in a way that makes it easy for you to read. To figure out what portion of the body is the message and what is an attachment, mail readers use an Internet standard called MIME (Multipurpose Internet Mail Extensions). When attachments are present, the `Content-Type` key in the header has a MIME type value of `multipart`, which indicates there are several documents in the body of the message. In addition, a boundary string is provided in the value. The boundary is a unique string not otherwise in the message, and it makrs the start and end of the attachments. The receiving email reader looks for this string in the message body and uses it to divide the message into its various pieces.
+
+We provide two sample messages as examples. The first is a plain text message with no attachments. It consists of an instructor's response to an inquiry sent by a student. The header includes 14 key-value pairs. Note the `Date` key includes a time zone offset, the `Message-ID` key gives the unique ID to track the message from the `stat.berkeley.edu` email server, and the `Content-Type` key indicates a MIME type of `TEXT/PLAIN`; that is, the message is plain text with no attachments. Notice also that there is an additional ilne at the start of the message that is not in the key-value format, i.e.
+
+```
+From nolan@stat.Berkeley.EDU Sun Feb 2 22:16:19 2014 -0800
+Date: Sun, 2 Feb 2014 22:16:19 -0800 (PST)
+From: nolan@stat.Berkeley.EDU
+X-X-Sender: nolan@kestrel.Berkeley.EDU
+To: Txxxx Uxxx <txxxx@uclink.berkeley.edu>
+Subject: Re: prof: did you receive my hw?
+In-Reply-To: <web-569552@calmail-st.berkeley.edu>
+Message-ID:
+<Pine.SOL.4.50.040202216120.2296-100000@kestrel.Berkeley.EDU>
+References: <web-569552@calmail-st.berkeley.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: O
+X-Status:
+X-Keywords:
+X-UID: 9079
+
+Yes it was received.
+
+-------------------------------------
+
+On Sun, 2 Feb 2014, txxxx wrote:
+
+> hey prof .nolan,
+>
+> i sent out my hw on sunday night. i just wonder did you receive
+> it because i am kinda scared thatyou didnt’ receive it.
+> like i just wonder how do i know if you got it or not, since
+> the cal mail system is kinda weird sometimes. thanks
+>
+> txxxx
+>
+```
+
+The second message consists of a text message and 2 attachments. It was sent by a student to the instructor and then forwarded by the instructor to the teaching assistant. We display only a small part of each attachment. The first attachment is a PDF file and the second is an HTML file.
+
+```
+From nolan@stat.Berkeley.EDU Sun Feb 2 22:18:56 2014 -0800
+Date: Sun, 2 Feb 2014 22:18:55 -0800 (PST)
+From: nolan@stat.Berkeley.EDU
+X-X-Sender: nolan@kestrel.Berkeley.EDU
+To: Gxxx <lxxx@stat.Berkeley.EDU>
+Subject: Assignment 1 sorry (fwd)
+Message-ID:
+  <Pine.SOL.4.50.040202218470.2296-201000@kestrel.Berkeley.EDU>
+MIME-Version: 1.0
+Content-Type: MULTIPART/Mixed;
+  BOUNDARY="_===669732====calmail-me.berkeley.edu===_"
+
+Content-ID: <Pine.SOL.4.50.040202218471.2296@kestrel.Berkeley.EDU>
+Status: RO
+X-Status:
+X-Keywords:
+X-UID: 9080
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; FORMAT=flowed
+Content-ID: <Pine.SOL.4.50.040202218472.2296@kestrel.Berkeley.EDU>
+
+
+---------- Forwarded message ----------
+Date: Sun, 02 Feb 2014 21:50:47 -0800
+From: Yyyy Zzz <Zzz@uclink.berkeley.edu>
+To: nolan@stat.Berkeley.EDU
+Subject: Assignment 1 sorry
+
+I am sorry to send this email again, but my outbox told
+me that the last email only send 1 attached file.
+I am sending this again to make sure you recieve all
+the necessary files.
+Thank You and sorry for the inconvenience.
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: APPLICATION/PDF; CHARSET=US-ASCII
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.SOL.4.50.040202218473.2296@kestrel.Berkeley.EDU>
+Content-Description:
+Content-Disposition: ATTACHMENT; FILENAME="PLOTS.pdf"
+JVBERi0xLjEKJYHigeOBz4HTDQoxIDAgb2JqCjw8Ci9DcmVhdGlvbkRhdGUgKEQ6Mj
+MDIxMTIwMTEpCi9Nb2REYXRlIChEOjIwMDQwMjAyMTEyMDExKQovVGl0bGUgKFI...
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: TEXT/HTML; CHARSET=US-ASCII
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.SOL.4.50.040202218474.2296@kestrel.Berkeley.EDU>
+Content-Description:
+Content-Disposition: ATTACHMENT; FILENAME="Stat133HW1.htm"
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2
+Ig0KeG1sbnM6dz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29...
+
+--_===669732====calmail-me.berkeley.edu===_--
+```
+
+The first part of the body is the forwarded message, which is a regular part of the body. Note that it has its own short header indicating the content type is plain text. Next comes the PDF attachment, which the owner has named `PLOTS.pdf`, and the third part of the email is an HTML attachment. According to the header for the attachments, they are both encoded in base64, which is an encoding designed for representing binary data in an ASCII string format.
+
+The `Content-Type` key in the header provides the boundary string for separating the attachments. This string is `_===669732====calmail-me.berkeley.edu===_`. We find 4 occurrences of the boundary in the email: at the start of the message, between the message and first attachment, between the first and second attachment, and at the end of the last attachment. Notice that the actual separator is the boundary string preceded by 2 hyphens, i.e `--_===669732====...`, except at the end of the message where the boundary is both preceded and followed by 2 hyphens.
+
+Now that we have a more complete understanding of the anatomy of an email message, we can better determine how to convert email into data that can be analyzed. In the next chapter, we tackle the job of reading email into R, and in Chapters \@ref(finding-words) and \@ref(organizing) we use the information about a general email message to store the email in data structures that are appropriate for further processing and analysis.

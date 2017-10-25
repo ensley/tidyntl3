@@ -1,0 +1,91 @@
+# Text Mining and Naive Bayes Classification {#mining}
+
+Naive Bayes is a probability-based approach to classification. This approach begins by studying the content of a large collection of email messages that have already been read and classified as spam or ham. Then when a new message comes to us, we use the information gleaned from our "training" set to compute the probability that the new message is spam. For example, suppose we receive a new message that says, "Are your taxes too high?". We use the probability
+
+$$
+P(\textrm{message is spam}|\textrm{message content:  "Are your taxes too high?"})
+$$
+to determine how likely it is that a message with this content is spam. We can also include in this probability computation other information about the email such as the number of attachments and the percentage of letters that are capitals, but our focus in this section is only on the text of the message. To compute this probability, we re-express it using Bayes' Rule as follows:
+
+$$
+P(\textrm{message is spam}|\textrm{message content}) = \frac{P(\textrm{message content|spam})P(\textrm{spam})}{P(\textrm{message content})}
+$$
+
+At first glance, it doesn't look as though Bayes' Rule has simplified the probability calculations at all. Now we have 3 probabilities to compute instead of one. However, the probability of spam is easily estimated by the proportion of spam messages in the training set of messages. And, we soon see that we do not need to calculate $P(\textrm{message content})$.
+
+We do need to compute the probability that a spam message has the new message's content. This is where the "naive" simplification of Bayes' Rule comes into play. We assume that the chance a particular word is in the message is independent of all other words in the message. That is, the probability that `high` appears in a spam message is independent of the probability that `taxes` appears in the message, i.e. $P(\textrm{high}|\textrm{taxes}) = P(\textrm{high})$. Clearly this is not the case, but making this assumption greatly simplifies the computations and turns out to still be effective in identifying spam.
+
+Suppose the set of unique words in all of the training messages ranges from `apple` to `zebra`. Then this naive assumption says that the likelihood of our message content is the following product of probabilities for all words:
+
+$$
+\begin{align*}
+P(\textrm{message content}|\textrm{spam}) \approx\;& P(\neg\textrm{ apple}|\textrm{spam}) \times \cdots \times \\
+&P(\textrm{high}|\textrm{spam}) \times \cdots \times P(\textrm{taxes}|\textrm{spam}) \times \\
+&\cdots \times P(\neg\textrm{ zebra}|\textrm{spam}).
+\end{align*}
+$$
+
+That is, each probability in the product on the right-hand side of the above approximation is either the probability that an individual word is present given the message is spam or the probability that the word is absent given the message is spam. To estimate these probabilities we have only to find the frequencies of these words in the spam portion of the training set. For example, we approximate $P(\textrm{high}|\textrm{spam})$ by the empirical fraction of spam messages containing the word `high` in the training set.
+
+Similarly, we can estimate $P(\textrm{message content}|\textrm{ham})$ using Bayes' Rule and the naive simplification. That is,
+
+$$
+\begin{align*}
+P(\textrm{message content}|\textrm{ham}) \approx\;& P(\neg\textrm{ apple}|\textrm{ham}) \times \cdots \times \\
+&P(\textrm{high}|\textrm{ham}) \times \cdots \times P(\textrm{taxes}|\textrm{ham}) \times \\
+&\cdots \times P(\neg\textrm{ zebra}|\textrm{ham}).
+\end{align*}
+$$
+
+And, we estimate each of the probabilities on the right-hand side of the approximation with the empirical proportion, e.g. we approximate $P(\textrm{high}|\textrm{ham})$ by the fraction of ham messages that contain the word `high`.
+
+The classification of a message depends on the likelihood ratio:
+
+$$
+\frac{P(\textrm{spam}|\textrm{message content})}{P(\textrm{ham}|\textrm{message content})}
+$$
+
+The possible values of this ratio range between 0 and $\infty$. The ratio is 1 when spam and ham are equally likely, greater than 1 when the probability the message is spam is greater than the probability it is ham, and less than 1 when it is smaller.
+
+It is often easier to work with this ratio in part because it eliminates the need to compute $P(\textrm{message content})$. Applying the naive Bayes approximation to the numberator and denominator yields:
+
+$$
+\begin{align*}
+\frac{P(\textrm{spam}|\textrm{message content})}{P(\textrm{ham}|\textrm{message content})} \approx\;& \frac{P(\neg\textrm{ apple}|\textrm{spam})}{P(\neg\textrm{ apple}|\textrm{ham})} \times \cdots \times \\
+& \frac{P(\textrm{high}|\textrm{spam})}{P(\textrm{high}|\textrm{ham})} \times \cdots \times \\
+& \frac{P(\neg\textrm{zebra}|\textrm{spam})}{P(\neg\textrm{zebra}|\textrm{ham})} \times \cdots \times \frac{P(\textrm{spam})}{P(\textrm{ham})}
+\end{align*}
+$$
+
+Our calculation has been reduced to a product of ratios of probabilities that are simple to estimate from the training data.
+
+One further mathematical convenience we use is to take the log of the ratio of the conditional probabilities above. Two benefits to taking the log are that the product becomes a sum, and values between 0 and 1 get "stretched out" between $-\infty$ and 0. This latter fact often means that the logged values have good statistical properties. The log odds ratio appears as
+
+$$
+\begin{align*}
+\log \left( \frac{P(\textrm{spam}|\textrm{message content})}{P(\textrm{ham}|\textrm{message content})} \right) \approx\;& \log \left( \frac{P(\neg\textrm{ apple}|\textrm{spam})}{P(\neg\textrm{ apple}|\textrm{ham})} \right) + \cdots + \\
+& \log \left( \frac{P(\textrm{high}|\textrm{spam})}{P(\textrm{high}|\textrm{ham})} \right) + \cdots + \\
+& \log \left( \frac{P(\neg\textrm{zebra}|\textrm{spam})}{P(\neg\textrm{zebra}|\textrm{ham})} \right) + \cdots + \log \left( \frac{P(\textrm{spam})}{P(\textrm{ham})} \right)
+\end{align*}
+$$
+
+One last computational consideration arises when a word appears solely in ham. In this situation, our estimate is 0 for the probability of this word given a message is spam, which is problematic when we take logs. To remedy this, we "smooth" all of the word counts by adding 0.5 to them, i.e.
+
+$$
+P(\textrm{high}|\textrm{spam}) \approx \frac{\textrm{# of spam messages with high} + 1/2}{\textrm{# of spam messages} + 1/2}
+$$
+
+We use the approximate log odds to classify messages. Our simple classification rule uses the training data to estimate probabilities like the one above; then we compute the log odds on test messages. That is, we include, for example, either $\log P(\textrm{high}|\textrm{spam})$ or $\log P(\neg\textrm{high}|\textrm{spam})$ in the sum depending on whether or not the test message contains the word `high`. When the log likelihood ratio for a new message exceeds some threshold, it is classified as spam. Otherwise, it is classified as ham.
+
+Now that we understand the naive Bayes approach to text mining and classification, we can determine how to process the email for this kind of analysis. From each message, we needs the set of words it contains, and we need the collection of unique words across all the messages. This all-encompassing set is called a "bag of words" (BOW). The probabilities that we compute are based on the presence and absence in a message of each word in the bag of words. Our tasks then are to:
+
+* Transform a message body into a set of the words.
+* Combine the words across messages into a bag of words.
+
+After we have prepared each message in this way, we can carry out our analysis. For this analysis, we need to:
+
+* Tally the frequencies in the training data of words in spam and ham separately to estimate the probability a word appears in a message given it is spam (or ham) from the proportion of spam (or ham) messages containing that word.
+* Estimate the likelihood that a new test message is spam (or ham) given its contents, i.e. given the message's words compute the naive Bayes version of the log likelihood ratio.
+* Find a threshold for the log likelihood ratio, where a message with a value above the threshold is classified as spam. We choose this threshold by examining the error rates for the test data.
+
+Since we do not have test messages, we divide our email corpus into 2 parts and use one part as our pseudo test set and the other as our training set. We do this after we have simplified all of the email into their word sets.

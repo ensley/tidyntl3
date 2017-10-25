@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="Using Statistics to Identify Spam" />
+<meta property="og:type" content="book" />
+
+
+
+
+
+<meta name="author" content="John Ensley" />
+
+<meta name="date" content="2017-10-24" />
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+
+<meta name="description" content="Using Statistics to Identify Spam">
+
+<title>Using Statistics to Identify Spam</title>
+
+<link href="libs/tufte-css/tufte.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+<link rel="stylesheet" href="toc.css" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div class="row">
+<div class="col-sm-12">
+<div id="TOC">
+<ul>
+<li><a href="index.html#preface">Preface</a></li>
+<li><a href="introduction.html#introduction"><span class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="anatomy.html#anatomy"><span class="toc-section-number">2</span> Anatomy of an Email Message</a></li>
+<li><a href="reading.html#reading"><span class="toc-section-number">3</span> Reading the Email Messages</a></li>
+<li><a href="mining.html#mining"><span class="toc-section-number">4</span> Text Mining and Naive Bayes Classification</a></li>
+<li><a href="finding-words.html#finding-words"><span class="toc-section-number">5</span> Finding the Words in a Message</a></li>
+<li><a href="naive-bayes.html#naive-bayes"><span class="toc-section-number">6</span> Implementing the Naive Bayes Classifier</a></li>
+<li><a href="classification-trees.html#classification-trees"><span class="toc-section-number">7</span> Recursive Partitioning and Classification Trees</a></li>
+<li><a href="organizing.html#organizing"><span class="toc-section-number">8</span> Organizing an Email Message into an R Data Structure</a></li>
+<li><a href="deriving-variables.html#deriving-variables"><span class="toc-section-number">9</span> Deriving Variables from the Email Message</a></li>
+<li><a href="feature-set.html#feature-set"><span class="toc-section-number">10</span> Exploring the Email Feature Set</a></li>
+<li><a href="fitting.html#fitting"><span class="toc-section-number">11</span> Fitting the <code>rpart()</code> Model to the Email Data</a></li>
+<li><a href="exercises.html#exercises"><span class="toc-section-number">12</span> Exercises</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+<div id="anatomy" class="section level1">
+<h1><span class="header-section-number">Chapter 2</span> Anatomy of an Email Message</h1>
+<p><span class="newthought">An electronic mail message</span> has two parts, a header and body. Analogous to surface mail, the header acts as an envelope, and the body is the letter that contains the contents for the recipient. In addition to the date, sender, and subject, the header has many other pieces of information, such as the message id, the carbon-copy (cc) recipients, and routing information as the message is relayed. These pieces of information are provided in a <code>key: value</code> format. That is, the key is the name of the kind of information being provided, and the value for that key follows the colon. For example, <code>From: debnolan@gmail.com</code> has a key of <code>From</code> and the value is the address of the sender. Sometimes the value contains more than one piece of information, and when this occurs, the pieces are separated by semicolons, e.g. <code>Content-Type: TEXT/PLAIN; charset=US-ASCII</code>.</p>
+<p>The body of the message is separated from the header by a single empty line. When an attachment is added to a message, the attachment is included in the body of the message. That is, even with attachments, email messages still consist only of these two basic parts – header and body. They may not appear that way when you see them in your email reader, but that is because your email application displays the message in a way that makes it easy for you to read. To figure out what portion of the body is the message and what is an attachment, mail readers use an Internet standard called MIME (Multipurpose Internet Mail Extensions). When attachments are present, the <code>Content-Type</code> key in the header has a MIME type value of <code>multipart</code>, which indicates there are several documents in the body of the message. In addition, a boundary string is provided in the value. The boundary is a unique string not otherwise in the message, and it makrs the start and end of the attachments. The receiving email reader looks for this string in the message body and uses it to divide the message into its various pieces.</p>
+<p>We provide two sample messages as examples. The first is a plain text message with no attachments. It consists of an instructor’s response to an inquiry sent by a student. The header includes 14 key-value pairs. Note the <code>Date</code> key includes a time zone offset, the <code>Message-ID</code> key gives the unique ID to track the message from the <code>stat.berkeley.edu</code> email server, and the <code>Content-Type</code> key indicates a MIME type of <code>TEXT/PLAIN</code>; that is, the message is plain text with no attachments. Notice also that there is an additional ilne at the start of the message that is not in the key-value format, i.e.</p>
+<pre><code>From nolan@stat.Berkeley.EDU Sun Feb 2 22:16:19 2014 -0800
+Date: Sun, 2 Feb 2014 22:16:19 -0800 (PST)
+From: nolan@stat.Berkeley.EDU
+X-X-Sender: nolan@kestrel.Berkeley.EDU
+To: Txxxx Uxxx &lt;txxxx@uclink.berkeley.edu&gt;
+Subject: Re: prof: did you receive my hw?
+In-Reply-To: &lt;web-569552@calmail-st.berkeley.edu&gt;
+Message-ID:
+&lt;Pine.SOL.4.50.040202216120.2296-100000@kestrel.Berkeley.EDU&gt;
+References: &lt;web-569552@calmail-st.berkeley.edu&gt;
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: O
+X-Status:
+X-Keywords:
+X-UID: 9079
+
+Yes it was received.
+
+-------------------------------------
+
+On Sun, 2 Feb 2014, txxxx wrote:
+
+&gt; hey prof .nolan,
+&gt;
+&gt; i sent out my hw on sunday night. i just wonder did you receive
+&gt; it because i am kinda scared thatyou didnt’ receive it.
+&gt; like i just wonder how do i know if you got it or not, since
+&gt; the cal mail system is kinda weird sometimes. thanks
+&gt;
+&gt; txxxx
+&gt;</code></pre>
+<p>The second message consists of a text message and 2 attachments. It was sent by a student to the instructor and then forwarded by the instructor to the teaching assistant. We display only a small part of each attachment. The first attachment is a PDF file and the second is an HTML file.</p>
+<pre><code>From nolan@stat.Berkeley.EDU Sun Feb 2 22:18:56 2014 -0800
+Date: Sun, 2 Feb 2014 22:18:55 -0800 (PST)
+From: nolan@stat.Berkeley.EDU
+X-X-Sender: nolan@kestrel.Berkeley.EDU
+To: Gxxx &lt;lxxx@stat.Berkeley.EDU&gt;
+Subject: Assignment 1 sorry (fwd)
+Message-ID:
+  &lt;Pine.SOL.4.50.040202218470.2296-201000@kestrel.Berkeley.EDU&gt;
+MIME-Version: 1.0
+Content-Type: MULTIPART/Mixed;
+  BOUNDARY=&quot;_===669732====calmail-me.berkeley.edu===_&quot;
+
+Content-ID: &lt;Pine.SOL.4.50.040202218471.2296@kestrel.Berkeley.EDU&gt;
+Status: RO
+X-Status:
+X-Keywords:
+X-UID: 9080
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; FORMAT=flowed
+Content-ID: &lt;Pine.SOL.4.50.040202218472.2296@kestrel.Berkeley.EDU&gt;
+
+
+---------- Forwarded message ----------
+Date: Sun, 02 Feb 2014 21:50:47 -0800
+From: Yyyy Zzz &lt;Zzz@uclink.berkeley.edu&gt;
+To: nolan@stat.Berkeley.EDU
+Subject: Assignment 1 sorry
+
+I am sorry to send this email again, but my outbox told
+me that the last email only send 1 attached file.
+I am sending this again to make sure you recieve all
+the necessary files.
+Thank You and sorry for the inconvenience.
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: APPLICATION/PDF; CHARSET=US-ASCII
+Content-Transfer-Encoding: BASE64
+Content-ID: &lt;Pine.SOL.4.50.040202218473.2296@kestrel.Berkeley.EDU&gt;
+Content-Description:
+Content-Disposition: ATTACHMENT; FILENAME=&quot;PLOTS.pdf&quot;
+JVBERi0xLjEKJYHigeOBz4HTDQoxIDAgb2JqCjw8Ci9DcmVhdGlvbkRhdGUgKEQ6Mj
+MDIxMTIwMTEpCi9Nb2REYXRlIChEOjIwMDQwMjAyMTEyMDExKQovVGl0bGUgKFI...
+
+--_===669732====calmail-me.berkeley.edu===_
+Content-Type: TEXT/HTML; CHARSET=US-ASCII
+Content-Transfer-Encoding: BASE64
+Content-ID: &lt;Pine.SOL.4.50.040202218474.2296@kestrel.Berkeley.EDU&gt;
+Content-Description:
+Content-Disposition: ATTACHMENT; FILENAME=&quot;Stat133HW1.htm&quot;
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2
+Ig0KeG1sbnM6dz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29...
+
+--_===669732====calmail-me.berkeley.edu===_--</code></pre>
+<p>The first part of the body is the forwarded message, which is a regular part of the body. Note that it has its own short header indicating the content type is plain text. Next comes the PDF attachment, which the owner has named <code>PLOTS.pdf</code>, and the third part of the email is an HTML attachment. According to the header for the attachments, they are both encoded in base64, which is an encoding designed for representing binary data in an ASCII string format.</p>
+<p>The <code>Content-Type</code> key in the header provides the boundary string for separating the attachments. This string is <code>_===669732====calmail-me.berkeley.edu===_</code>. We find 4 occurrences of the boundary in the email: at the start of the message, between the message and first attachment, between the first and second attachment, and at the end of the last attachment. Notice that the actual separator is the boundary string preceded by 2 hyphens, i.e <code>--_===669732====...</code>, except at the end of the message where the boundary is both preceded and followed by 2 hyphens.</p>
+<p>Now that we have a more complete understanding of the anatomy of an email message, we can better determine how to convert email into data that can be analyzed. In the next chapter, we tackle the job of reading email into R, and in Chapters <a href="finding-words.html#finding-words">5</a> and <a href="organizing.html#organizing">8</a> we use the information about a general email message to store the email in data structures that are appropriate for further processing and analysis.</p>
+
+</div>
+<p style="text-align: center;">
+<a href="introduction.html"><button class="btn btn-default">Previous</button></a>
+<a href="reading.html"><button class="btn btn-default">Next</button></a>
+</p>
+</div>
+</div>
+
+
+
+</body>
+</html>
